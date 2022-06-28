@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\Comapnies\StoreRequest;
 use App\Repositories\Companies\CompaniesRepositories;
 use App\Http\Requests\Comapnies\UpdateCompaniesRequest;
+use App\Http\Controllers\HomeController;
 
 class CompaniesController extends Controller
 {
@@ -51,11 +52,17 @@ class CompaniesController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreRequest $request)
+    public function store(StoreRequest $request, HomeController $home)
     {
         $input = $request->all();
-        $createCompanies = $this->companies->create($input);        
-        return redirect()->route('companies.index')->with('success', 'Companies created successfully.');
+        $this->companies->create($input);
+        // Call the Push Notification Method
+        $getFirebaseReponse = json_decode($home->sendPushNotification());
+        if (!empty($getFirebaseReponse) && $getFirebaseReponse->success == true) {
+            return redirect()->route('companies.index')->with('success', 'Companies created successfully - ' . 'Firebase Success ID : ' . $getFirebaseReponse->message_id);
+        } else {
+            return redirect()->route('companies.index')->with('success', 'Companies created successfully - ' . 'Firebase Error : ' . $getFirebaseReponse->error);
+        }
     }
 
     /**

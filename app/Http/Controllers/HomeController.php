@@ -33,7 +33,7 @@ class HomeController extends Controller
         return response()->json(['token saved successfully.']);
     }
 
-    public function sendPushNotification(Request $request)
+    public function sendPushNotification()
     {
         $firebaseToken = User::whereNotNull('device_token')->pluck('device_token')->all();
         $SERVER_API_KEY = 'AAAAjTr866o:APA91bF0VfNjECCv71_UYujiHcTByXq3sy3JdV4gsIkCpK6Q39vpQ11tW4cRLYL0xLp6iM5nYS4i0Teifa2CS8XOaGklHpxr3T2FWAxDRjMLkzLpJMtmbRAuBxtebjXZhK34knWN-d8j';
@@ -63,7 +63,16 @@ class HomeController extends Controller
         curl_setopt($ch, CURLOPT_POSTFIELDS, $dataString);
                
         $response = curl_exec($ch);
-  
-        dd($response);
+
+        if (!empty($response)) {
+            $response = json_decode($response);
+            if (!empty($response->success)) {
+                return json_encode(['message_id' => $response->multicast_id, 'success' => true]);
+            } else {
+                return json_encode(['error' => 'There is some issue with Firebase message', 'success' => false]);
+            }
+        } else {
+            return json_encode(['error' => 'There is some issue with Firebase message', 'success' => false]);
+        }
     }
 }
